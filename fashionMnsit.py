@@ -1,13 +1,14 @@
+# Saugat Malla
+# Task 4
+
+# Importing necessary libraries
 import sys
 import torch
 import torchvision
-
 import matplotlib.pyplot as plt
-
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
 
 ## Neural Network
 class MyNetwork(nn.Module):
@@ -31,8 +32,6 @@ class MyNetwork(nn.Module):
         x = F.dropout(x, training=self.training)
         x = self.fc3(x)
         return F.log_softmax(x, dim=1)
-
-    
 
 # Train function
 def train(network, train_loader, loss_fn, epoch, train_losses, train_counter, optimizer, log_interval):
@@ -147,17 +146,17 @@ def main(argv):
 
 
     # Variations to explore
-    # num_layers_list = [2,3,4]
-    # num_neurons_list = [120,150,200]
-    # dropout_rate_list = [0.2,0.3,0.4]
-    # learning_rate_list = [0.01,0.001,0.0001]
-    # regularization_list = [None, 'dropout', 'l2']
+    # num_layers_list = [2,3,5]
+    # num_neurons_list = [20,120,150]
+    # dropout_rate_list = [0.2,0.3,0.5]
+    # learning_rate_list = [0.01,0.001, 0.001]
+    # regularization_list = [None,'dropout']
 
-    num_layers_list = [2,3]
-    num_neurons_list = [120,150]
-    dropout_rate_list = [0.2,0.3]
-    learning_rate_list = [0.01,0.001]
-    regularization_list = [None,'dropout']
+    num_layers_list = [5]
+    num_neurons_list = [120]
+    dropout_rate_list = [0.3,]
+    learning_rate_list = [0.01]
+    regularization_list = [None]
 
     variations = []
     for num_layers in num_layers_list:
@@ -217,11 +216,9 @@ def main(argv):
             'accuracies': accuracies
         })
 
-
-
+    # Display sample predictions
     with torch.no_grad():
         output = network(example_data)
-
 
     fig = plt.figure()
     for i in range(6):
@@ -239,7 +236,7 @@ def main(argv):
     # Print or save ranked results
     for i, result in list(enumerate(ranked_results))[:5]:
         print(f"Rank {i+1}:")
-        print(result)
+        print(result['variation'])
 
 if __name__ == "__main__":
     main(sys.argv)

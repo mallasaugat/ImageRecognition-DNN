@@ -1,3 +1,7 @@
+# Saugat Malla
+# Extension
+
+# Importing necessary libraries
 import sys
 import torch
 import torchvision
@@ -6,7 +10,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.signal import convolve2d
 import cv2
 
 # Define Gabor filter bank
@@ -25,7 +28,7 @@ class MyNetwork(nn.Module):
     def __init__(self):
         super(MyNetwork, self).__init__()
         # Define the Gabor filter bank layer
-        self.gabor_filter = nn.Conv2d(1, 10, kernel_size=5)  # Assuming 10 Gabor filters
+        self.gabor_filter = nn.Conv2d(1, 10, kernel_size=5)  # 10 Gabor filters
         self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
         self.conv2_drop = nn.Dropout2d()
         self.fc1 = nn.Linear(320, 50)

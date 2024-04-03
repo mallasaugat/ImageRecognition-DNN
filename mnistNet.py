@@ -1,21 +1,21 @@
-# Task 1 [A - D] 
+# Saugat Malla
 
-# import statements
+# Task 1 [A - D]
+
+# Importing necessary libraries
 import sys
 import torch
 import torchvision
-
 import matplotlib.pyplot as plt
-
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
 
 ## Neural Network
 class MyNetwork(nn.Module):
     def __init__(self):
         super(MyNetwork, self).__init__()
+        # Define convolutional layers and fully connected layers
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)
         self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
         self.conv2_drop = nn.Dropout2d()
@@ -23,6 +23,7 @@ class MyNetwork(nn.Module):
         self.fc2 = nn.Linear(50,10)
     
     def forward(self, x):
+        # Define the forward pass
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
         x = x.view(-1, 320)
@@ -33,6 +34,7 @@ class MyNetwork(nn.Module):
 
 # Train function
 def train(network, train_loader, epoch, train_losses, train_counter, optimizer, log_interval):
+    # Set the model to training mode
     network.train()
 
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -43,15 +45,19 @@ def train(network, train_loader, epoch, train_losses, train_counter, optimizer, 
         optimizer.step()
 
         if batch_idx % log_interval == 0:
+            # Print training statistics
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), len(train_loader.dataset),100. * batch_idx / len(train_loader), loss.item()))
         
+        # Record training loss and iteration
         train_losses.append(loss.item())
         train_counter.append((batch_idx*64) + ((epoch-1)*len(train_loader.dataset)))
+        # Save model and optimizer state
         torch.save(network.state_dict(), 'results/model.pth')
         torch.save(optimizer.state_dict(), 'results/optimizer.pth')
 
 # Test function
 def test(network, test_loader, test_losses):
+    # Set the model to evaluation mode
     network.eval()
     test_loss = 0
     correct = 0
@@ -66,6 +72,7 @@ def test(network, test_loader, test_losses):
     test_loss /= len(test_loader.dataset)
     test_losses.append(test_loss)
 
+    # Print test set results
     print('\nTest set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(test_loss, correct, len(test_loader.dataset),100. * correct / len(test_loader.dataset)))
 
 
@@ -123,9 +130,9 @@ def main(argv):
         plt.imshow(example_data[i][0], cmap='gray', interpolation='none')
         plt.xticks([])
         plt.yticks([])
-    # %%
     plt.show()
 
+    # Initialize the neural network and optimizer
     network = MyNetwork()
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
 
@@ -135,26 +142,27 @@ def main(argv):
     test_losses = []
     test_counter = [i*len(train_loader.dataset) for i in range(n_epochs + 1)]
 
+    # Evaluate the model before training
     test(network, test_loader, test_losses)
+    
+    # Perform training epochs
     for epoch in range(1, n_epochs + 1):
         train(network, train_loader, epoch, train_losses, train_counter, optimizer, log_interval)
         test(network, test_loader, test_losses)
 
-    # Evaluating the models performance
+    # Plotting training and test losses
     fig = plt.figure()
     plt.plot(train_counter, train_losses, color='blue')
     plt.scatter(test_counter, test_losses, color='red')
     plt.legend(['Train Loss', 'Test Loss'], loc = 'upper right')
     plt.xlabel('number of training examples seen')
     plt.ylabel('negative log likelihood loss')
-    # %%
     plt.show()
     fig
 
-
+    # Visualize predictions
     with torch.no_grad():
         output = network(example_data)
-
 
     fig = plt.figure()
     for i in range(6):

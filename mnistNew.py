@@ -1,5 +1,7 @@
 # Saugat Malla
-# Task 3 (Testing)
+# Task 1 [F]
+
+# Loads the files from the directory and make prediction
 
 # Importing necessary libraries
 import sys
@@ -9,18 +11,18 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
-from torchviz import make_dot
+import glob
+import os
 
-# Transform greek letter images
-class GreekTransform:
+
+class ImgTransform:
     def __init__(self):
         pass
 
     def __call__(self, x):
         # Convert to grayscale
         x = torchvision.transforms.functional.rgb_to_grayscale(x)
-        # Apply affine transformation
-        x = torchvision.transforms.functional.affine(x, 0, (0,0), 36/128, 0)
+
         # Center crop to 28x28
         x = torchvision.transforms.functional.center_crop(x, (28, 28))
         # Invert colors
@@ -34,7 +36,7 @@ class Net(nn.Module):
         self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
         self.conv2_drop = nn.Dropout2d()
         self.fc1 = nn.Linear(320, 50)
-        self.fc2 = nn.Linear(50,3)
+        self.fc2 = nn.Linear(50,10)
     
     def forward(self, x):
         # Define the forward pass
@@ -47,36 +49,49 @@ class Net(nn.Module):
         return F.log_softmax(x, dim=1)
 
 def main(argv):
+
+    random_seed = 1
+    torch.manual_seed(random_seed)
+
     # Loading the pre-trained network
     network = Net()
-    network_state_dict = torch.load('results/greek_model.pth')
+    network_state_dict = torch.load('results/model.pth')
     network.load_state_dict(network_state_dict)
 
-    # Load and preprocess the test image
-    image = Image.open("dataset/greek_train/gamma/gamma_002.png")
-    transform = torchvision.transforms.Compose([
-        torchvision.transforms.ToTensor(),
-        GreekTransform(),
-        torchvision.transforms.Normalize((0.1307,), (0.3081,))
-    ])
-    alphaImg = transform(image).unsqueeze(0)  # Add a batch dimension
-    alphaImg.requires_grad = True  # Ensure gradients are calculated for the input
+    idx = 0
+    for filename in glob.glob("dataset/additional_numbers/*"):
 
-    # Forward pass through the network
-    output = network(alphaImg)
+        # Load and preprocess the test image
 
-    # Obtain the predicted class
-    pred = output.data.max(1, keepdim=True)[1]
-    if pred.item() == 0:
-        print("Alpha")
-    elif pred.item() == 1:
-        print("Beta")
-    else:
-        print("Gamma")
+        image = Image.open(filename)
+        transform = torchvision.transforms.Compose([
+            torchvision.transforms.ToTensor(),
+            ImgTransform(),
+            torchvision.transforms.Normalize((0.1307,), (0.3081,))
+        ])
+        img = transform(image).unsqueeze(0)  # Add a batch dimension
+        img.requires_grad = True  # Ensure gradients are calculated for the input
 
-    # Generate a computational graph
-    dot = make_dot(output, params=dict(network.named_parameters()))
-    dot.render("CNN", format="png", cleanup=True)
+        # Forward pass through the network
+        output = network(img)
+
+        # Obtain the predicted class
+        pred = output.data.max(1, keepdim=True)[1]
+
+        target = os.path.basename(filename)[0]
+        
+
+        plt.subplot(4, 3, idx+1)
+        plt.tight_layout()
+        
+        plt.title("Ground Truth: {}".format(target))
+        plt.imshow(image, cmap='gray', interpolation='none')
+        plt.xticks([])
+        plt.yticks([])
+
+        idx += 1
+    
+    plt.show()
 
 if __name__ == "__main__":
     main(sys.argv)

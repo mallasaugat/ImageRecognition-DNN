@@ -1,26 +1,30 @@
+# Saugat Malla
+# Task 3 (Training)
+
+# Importing necessary libraries
 import sys
 import torch
 import torchvision 
-
 import matplotlib.pyplot as plt
-
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
 from PIL import Image
 
-# Transform greek letter images
+# Define a custom transformation for the Greek letter images
 class GreekTransform:
     def __init__(self):
         pass
 
     def __call__(self, x):
-        x = torchvision.transforms.functional.rgb_to_grayscale( x )
-        x = torchvision.transforms.functional.affine( x, 0, (0,0), 36/128, 0 )
-        x = torchvision.transforms.functional.center_crop( x, (28, 28) )
-        return torchvision.transforms.functional.invert( x )
-
+        # Convert to grayscale
+        x = torchvision.transforms.functional.rgb_to_grayscale(x)
+        # Apply affine transformation
+        x = torchvision.transforms.functional.affine(x, 0, (0,0), 36/128, 0)
+        # Center crop to 28x28
+        x = torchvision.transforms.functional.center_crop(x, (28, 28))
+        # Invert colors
+        return torchvision.transforms.functional.invert(x)
 
 ## Neural Network
 class Net(nn.Module):
@@ -33,6 +37,7 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(50,10)
     
     def forward(self, x):
+        # Define the forward pass
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
         x = x.view(-1, 320)
@@ -62,7 +67,6 @@ def train(network, greek_train, optimizer, criterion):
     accuracy = 100 * correct / total
     return running_loss / len(greek_train), accuracy
 
-
 # Main function
 def main(argv):
     # Hyperparameters
@@ -71,8 +75,7 @@ def main(argv):
     learning_rate = 0.001
     torch.manual_seed(1)
 
-
-    # Getting the dataset ( Dataloader for Greek dataset)
+    # Getting the dataset ( DataLoader for the Greek dataset)
     greek_train = torch.utils.data.DataLoader(
             torchvision.datasets.ImageFolder( 'dataset/greek_train',
                                             transform = torchvision.transforms.Compose( [torchvision.transforms.ToTensor(),
@@ -82,20 +85,20 @@ def main(argv):
             batch_size = batch_size_train,
             shuffle = True )
 
-    # Loading the network and finetune final layer
+    # Loading the pre-trained network and finetuning the final layer
     network = Net()
     network_state_dict = torch.load('results/model.pth')
     network.load_state_dict(network_state_dict)
 
-    # Freezing the parameters for the whole network (but last)
+    # Freezing the parameters for the whole network (except the last layer)
     for param in network.parameters():
         param.requires_grad = False
 
-    # Enable weight updates in the last layer
+    # Enabling weight updates only in the last layer
     for param in network.fc2.parameters():
         param.requires_grad = True
 
-    network.fc2 = nn.Linear(50,3)
+    network.fc2 = nn.Linear(50,3)  # Changing the output layer to match the Greek dataset
 
     # Initial Analysis
     examples = enumerate(greek_train)
@@ -114,7 +117,6 @@ def main(argv):
         plt.imshow(example_data[i][0], cmap='gray', interpolation='none')
         plt.xticks([])
         plt.yticks([])
-    # %%
     plt.show()
 
     # Define optimizer and loss function
@@ -130,9 +132,7 @@ def main(argv):
         train_accuracies.append(train_accuracy)
         print(f"Epoch {epoch + 1}/{n_epochs}, Loss: {train_loss}, Accuracy: {train_accuracy}%")
 
-
-
-    # Evaluating the models performance
+    # Evaluating the model's performance
     fig = plt.figure()
     # Plot training loss
     plt.plot(train_losses, label='Training Loss')
@@ -140,8 +140,6 @@ def main(argv):
     plt.ylabel('Loss')
     plt.legend()
     plt.show()
-    fig
-
 
 if __name__ == "__main__":
     main(sys.argv)
